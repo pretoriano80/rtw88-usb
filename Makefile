@@ -22,10 +22,15 @@ rtw88-y += main.o \
 	   regd.o
 
 rtw88-$(CONFIG_RTW88_8822BE)	+= rtw8822b.o rtw8822b_table.o
+rtw88-$(CONFIG_RTW88_8822BU)	+= rtw8822b.o rtw8822b_table.o
 rtw88-$(CONFIG_RTW88_8822CE)	+= rtw8822c.o rtw8822c_table.o
+rtw88-$(CONFIG_RTW88_8822CU)	+= rtw8822c.o rtw8822c_table.o
 
 obj-$(CONFIG_RTW88_PCI)		+= rtwpci.o
 rtwpci-objs			:= pci.o
+
+obj-$(CONFIG_RTW88_USB)		+= rtwusb.o
+rtwusb-objs			:= usb.o
 
 ifeq ($(CONFIG_PLATFORM_I386_PC), y)
 KSRC = /lib/modules/$(shell uname -r)/build
@@ -39,8 +44,11 @@ else
 
 export CONFIG_RTW88_CORE = m
 export CONFIG_RTW88_8822BE = y
+export CONFIG_RTW88_8822BU = y
 export CONFIG_RTW88_8822CE = y
+export CONFIG_RTW88_8822CU = y
 export CONFIG_RTW88_PCI = m
+export CONFIG_RTW88_USB = m
 
 all: modules
 
