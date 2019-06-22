@@ -853,6 +853,9 @@ static int rtw_chip_parameter_setup(struct rtw_dev *rtwdev)
 	case RTW_HCI_TYPE_PCIE:
 		rtwdev->hci.rpwm_addr = 0x03d9;
 		break;
+	case RTW_HCI_TYPE_USB:
+		rtwdev->hci.rpwm_addr = 0xfe58;
+		break;
 	default:
 		rtw_err(rtwdev, "unsupported hci type\n");
 		return -EINVAL;
