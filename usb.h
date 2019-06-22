@@ -12,4 +12,7 @@
 	USB_DEVICE_AND_INTERFACE_INFO(vend, dev, cl, sc, pr),		\
 	.driver_info = (kernel_ulong_t) & (hw_config),
 
+struct rtw_usb {
+	struct usb_device *udev;
+};
 #endif

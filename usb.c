@@ -12,13 +12,46 @@
 static int rtw_usb_probe(struct usb_interface *intf,
 			 const struct usb_device_id *id)
 {
+	struct usb_device *udev;
+	struct ieee80211_hw *hw;
+	struct rtw_dev *rtwdev;
+	struct rtw_usb *rtwusb;
+	int drv_data_size;
 	int ret = -ENODEV;
 
+	udev = interface_to_usbdev(intf);
+
+	drv_data_size = sizeof(struct rtw_dev) + sizeof(struct rtw_usb);
+	hw = ieee80211_alloc_hw(drv_data_size, &rtw_ops);
+	if (!hw) {
+		dev_err(&udev->dev, "failed to allocate hw\n");
+		return -ENOMEM;
+	}
+
+	rtwdev = hw->priv;
+	rtwdev->hw = hw;
+	rtwdev->dev = &udev->dev;
+	rtwdev->chip = (struct rtw_chip_info *)id->driver_info;
+	rtwusb = (struct rtw_usb *) rtwdev->priv;
+	rtwusb->udev = interface_to_usbdev(intf);
 	return ret;
 }
 
 static void rtw_usb_disconnect(struct usb_interface *intf)
 {
+	struct ieee80211_hw *hw = usb_get_intfdata(intf);
+	struct rtw_dev *rtwdev;
+	struct rtw_usb *rtwusb;
+
+	if (!hw)
+		return;
+
+	rtwdev = hw->priv;
+	rtwusb = (struct rtw_usb *)rtwdev->priv;
+
+	rtw_unregister_hw(rtwdev, hw);
+	rtw_core_deinit(rtwdev);
+	ieee80211_free_hw(hw);
 }
 
 #define USB_VENDOR_ID_REALTEK           0x0bda
