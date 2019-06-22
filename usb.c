@@ -189,14 +189,58 @@ static void rtw_usb_write32(struct rtw_dev *rtwdev, u32 addr, u32 val)
 
 	_usb_write_async(rtwusb->udev, addr, val, 4);
 }
+static int rtw_usb_tx(struct rtw_dev *rtwdev,
+		      struct rtw_tx_pkt_info *pkt_info,
+		      struct sk_buff *skb)
+{
+#warning "rtw_usb_tx() undefined!"
+	return 0;
+}
+
+static int rtw_usb_setup(struct rtw_dev *rtwdev)
+{
+#warning "rtw_usb_setup() undefined!"
+	return 0;
+}
+
+static int rtw_usb_start(struct rtw_dev *rtwdev)
+{
+#warning "rtw_usb_start() undefined!"
+	return 0;
+}
+
+static void rtw_usb_stop(struct rtw_dev *rtwdev)
+{
+#warning "rtw_usb_stop() undefined!"
+}
+
+static int rtw_usb_write_data_rsvd_page(struct rtw_dev *rtwdev, u8 *buf,
+					u32 size)
+{
+#warning "rtw_usb_write_data_rsvd_page() undefined!"
+	return 0;
+}
+
+static int rtw_usb_write_data_h2c(struct rtw_dev *rtwdev, u8 *buf, u32 size)
+{
+#warning "rtw_usb_write_data_h2c() undefined!"
+	return 0;
+}
 
 static struct rtw_hci_ops rtw_usb_ops = {
+	.tx = rtw_usb_tx,
+	.setup = rtw_usb_setup,
+	.start = rtw_usb_start,
+	.stop = rtw_usb_stop,
+
 	.read8 = rtw_usb_read8,
 	.read16 = rtw_usb_read16,
 	.read32 = rtw_usb_read32,
 	.write8 = rtw_usb_write8,
 	.write16 = rtw_usb_write16,
 	.write32 = rtw_usb_write32,
+	.write_data_rsvd_page = rtw_usb_write_data_rsvd_page,
+	.write_data_h2c = rtw_usb_write_data_h2c,
 };
 
 static int rtw_usb_set_endpoints(struct usb_interface *intf,
