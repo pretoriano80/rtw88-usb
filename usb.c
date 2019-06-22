@@ -15,6 +15,9 @@
 
 #define MAX_USBCTRL_VENDORREQ_TIMES		10
 
+#define _RTK_EP_OUT_MIN				2
+#define _RTK_EP_OUT_MAX				4
+
 static void usbctrl_async_callback(struct urb *urb)
 {
 	if (urb) {
@@ -196,6 +199,28 @@ static struct rtw_hci_ops rtw_usb_ops = {
 	.write32 = rtw_usb_write32,
 };
 
+static int rtw_usb_set_endpoints(struct usb_interface *intf,
+				 struct rtw_dev *rtwdev)
+{
+	struct usb_host_interface *intf_desc = intf->cur_altsetting;
+	struct usb_endpoint_descriptor *ep_desc;
+	int i, out_ep = 0;
+
+	for (i = 0; i < intf_desc->desc.bNumEndpoints; i++) {
+		ep_desc = &intf_desc->endpoint[i].desc;
+
+		if (usb_endpoint_is_bulk_out(ep_desc))
+			out_ep++;
+	}
+
+	if (out_ep < _RTK_EP_OUT_MIN || out_ep >  _RTK_EP_OUT_MAX)
+		return -EINVAL;
+
+	rtwdev->hci.bulkout_num = out_ep;
+
+	return 0;
+}
+
 static int rtw_usb_probe(struct usb_interface *intf,
 			 const struct usb_device_id *id)
 {
@@ -221,6 +246,13 @@ static int rtw_usb_probe(struct usb_interface *intf,
 	rtwdev->chip = (struct rtw_chip_info *)id->driver_info;
 	rtwdev->hci.ops = &rtw_usb_ops;
 	rtwdev->hci.type = RTW_HCI_TYPE_USB;
+	rtw_usb_set_endpoints(intf, rtwdev);
+
+	dev_info(&udev->dev, "rtw_usb_probe(): try probe %04x:%04x bulkout_num %d",
+		 (int) le16_to_cpu(udev->descriptor.idVendor),
+		 (int) le16_to_cpu(udev->descriptor.idProduct),
+		 rtwdev->hci.bulkout_num);
+
 	rtwusb = (struct rtw_usb *) rtwdev->priv;
 	rtwusb->udev = interface_to_usbdev(intf);
 	rtwusb->usb_data = kcalloc(RTL_USB_MAX_RX_COUNT, sizeof(u32),
