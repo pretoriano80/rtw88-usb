@@ -246,7 +246,10 @@ static int rtw_usb_probe(struct usb_interface *intf,
 	rtwdev->chip = (struct rtw_chip_info *)id->driver_info;
 	rtwdev->hci.ops = &rtw_usb_ops;
 	rtwdev->hci.type = RTW_HCI_TYPE_USB;
-	rtw_usb_set_endpoints(intf, rtwdev);
+
+	ret = rtw_usb_set_endpoints(intf, rtwdev);
+	if (ret)
+		goto err_release_hw;
 
 	dev_info(&udev->dev, "rtw_usb_probe(): try probe %04x:%04x bulkout_num %d",
 		 (int) le16_to_cpu(udev->descriptor.idVendor),
@@ -257,13 +260,21 @@ static int rtw_usb_probe(struct usb_interface *intf,
 	rtwusb->udev = interface_to_usbdev(intf);
 	rtwusb->usb_data = kcalloc(RTL_USB_MAX_RX_COUNT, sizeof(u32),
 				   GFP_KERNEL);
-	if (!rtwusb->usb_data)
-		return -ENODEV;
+	if (!rtwusb->usb_data) {
+		ret =  -ENODEV;
+		goto err_release_hw;
+	}
 
 	/* this spin lock must be initialized early */
 	spin_lock_init(&rtwusb->usb_lock);
 
 	return ret;
+
+err_release_hw:
+	ieee80211_free_hw(hw);
+
+	return ret;
+
 }
 
 static void rtw_usb_disconnect(struct usb_interface *intf)
