@@ -312,7 +312,16 @@ static int rtw_usb_probe(struct usb_interface *intf,
 	/* this spin lock must be initialized early */
 	spin_lock_init(&rtwusb->usb_lock);
 
-	return ret;
+	ret = rtw_register_hw(rtwdev, hw);
+	if (ret) {
+		rtw_err(rtwdev, "failed to register hw\n");
+		goto err_destroy_usb;
+	}
+
+	return 0;
+
+err_destroy_usb:
+	kfree(rtwusb->usb_data);
 
 err_release_hw:
 	ieee80211_free_hw(hw);
