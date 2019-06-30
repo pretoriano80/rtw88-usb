@@ -25,7 +25,7 @@ static void rtw8822be_efuse_parsing(struct rtw_efuse *efuse,
 static void rtw8822bu_efuse_parsing(struct rtw_efuse *efuse,
 				    struct rtw8822b_efuse *map)
 {
-	ether_addr_copy(efuse->addr, map->e.mac_addr);
+	ether_addr_copy(efuse->addr, map->u.mac_addr);
 }
 
 static int rtw8822b_read_efuse(struct rtw_dev *rtwdev, u8 *log_map)
