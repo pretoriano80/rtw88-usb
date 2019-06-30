@@ -243,24 +243,84 @@ static struct rtw_hci_ops rtw_usb_ops = {
 	.write_data_h2c = rtw_usb_write_data_h2c,
 };
 
+/*
+ * Ripped out of RTL8821AU and RTL8822BU
+ * typical setting with using WMM
+ */
+static void _rtw_usb_set_tx_two_ep(int *ep_mapping, int *ep)
+{
+	ep_mapping[RTW_TX_QUEUE_BE]	= ep[1];
+	ep_mapping[RTW_TX_QUEUE_BK]	= ep[1];
+	ep_mapping[RTW_TX_QUEUE_VI]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_VO]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_MGMT]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_BCN]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_HI0]	= ep[0];
+}
+
+static void _rtw_usb_set_tx_three_ep(int *ep_mapping, int *ep)
+{
+	ep_mapping[RTW_TX_QUEUE_BE]	= ep[2];
+	ep_mapping[RTW_TX_QUEUE_BK]	= ep[2];
+	ep_mapping[RTW_TX_QUEUE_VI]	= ep[1];
+	ep_mapping[RTW_TX_QUEUE_VO]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_MGMT]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_BCN]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_HI0]	= ep[0];
+}
+
+static void _rtw_usb_set_tx_four_ep(int *ep_mapping, int *ep)
+{
+	ep_mapping[RTW_TX_QUEUE_BE]	= ep[2];
+	ep_mapping[RTW_TX_QUEUE_BK]	= ep[2];
+	ep_mapping[RTW_TX_QUEUE_VI]	= ep[1];
+	ep_mapping[RTW_TX_QUEUE_VO]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_MGMT]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_BCN]	= ep[0];
+	ep_mapping[RTW_TX_QUEUE_HI0]	= ep[3];
+}
+
 static int rtw_usb_set_endpoints(struct usb_interface *intf,
 				 struct rtw_dev *rtwdev)
 {
+	struct rtw_usb *rtwusb = (struct rtw_usb *) rtwdev->priv;
 	struct usb_host_interface *intf_desc = intf->cur_altsetting;
-	struct usb_endpoint_descriptor *ep_desc;
-	int i, out_ep = 0;
+	struct usb_endpoint_descriptor *epd;
+	struct usb_device *udev = interface_to_usbdev(intf);
+	int i;
+	int num_out_ep = 0, ep_out[RTK_MAX_TX_QUEUE_NUM];
+	int num_in_ep = 0, ep_in = 0;
 
 	for (i = 0; i < intf_desc->desc.bNumEndpoints; i++) {
-		ep_desc = &intf_desc->endpoint[i].desc;
+		epd = &intf_desc->endpoint[i].desc;
 
-		if (usb_endpoint_is_bulk_out(ep_desc))
-			out_ep++;
+		if (usb_endpoint_is_bulk_out(epd)) {
+			ep_out[num_out_ep] = usb_endpoint_num(epd);;
+			num_out_ep++;
+		}
+		if (usb_endpoint_is_bulk_in(epd)) {
+			ep_in = usb_endpoint_num(epd);
+			num_in_ep++;
+		}
 	}
 
-	if (out_ep < _RTK_EP_OUT_MIN || out_ep >  _RTK_EP_OUT_MAX)
+	if (num_out_ep < _RTK_EP_OUT_MIN || num_out_ep >  _RTK_EP_OUT_MAX) {
+		dev_info(&udev->dev, "Wrong EP out number %d\n", i);
 		return -EINVAL;
+	}
 
-	rtwdev->hci.bulkout_num = out_ep;
+	rtwdev->hci.bulkout_num = num_out_ep;
+
+	rtwusb->ep_in = ep_in;
+	switch(num_out_ep) {
+	case 2:
+		_rtw_usb_set_tx_two_ep(rtwusb->ep_out, ep_out);
+		break;
+	case 3:
+	case 4:
+		_rtw_usb_set_tx_three_ep(rtwusb->ep_out, ep_out);
+		break;
+	};
 
 	return 0;
 }

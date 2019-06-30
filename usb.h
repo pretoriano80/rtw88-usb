@@ -23,5 +23,8 @@ struct rtw_usb {
 
 	__le32 *usb_data;
 	int usb_data_index;
+
+	int ep_out[RTK_MAX_TX_QUEUE_NUM];
+	int ep_in;
 };
 #endif
